@@ -2,37 +2,53 @@ import api from './axiosInstance';
 
 const authService = {
   login: async (credentials) => {
-    // Muammoni yechish: Ham 'email', ham 'username' kalitlarini yuboramiz!
-    // Shunda backend qaysi birini kutayotgan bo'lishidan qat'iy nazar 500 xatosi bermaydi.
+    // Himoya: email mavjudligini tekshirish
+    if (!credentials?.email || !credentials?.password) {
+      throw new Error('Email va parol majburiy');
+    }
+
     const response = await api.post('/api/auth/login', {
-      username: credentials.email.trim(), // Agarda backend 'username' deb kutayotgan bo'lsa
-      email: credentials.email.trim(),    // Agarda backend 'email' deb kutayotgan bo'lsa
+      username: credentials.email.trim(),
+      email: credentials.email.trim(),
       password: credentials.password
-    }, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
     });
-    
-    // AuthResponse ichidan tokenni tekshirish
-    const token = response.data?.token || response.data?.jwt || response.data?.accessToken;
+
+    // response.data mavjudligini tekshirish
+    if (!response?.data) {
+      throw new Error('Serverdan javob kelmadi');
+    }
+
+    const token =
+      response.data?.token ||
+      response.data?.jwt ||
+      response.data?.accessToken;
+
     if (token) {
       localStorage.setItem('token', token);
+    } else {
+      console.warn('Token topilmadi:', response.data);
     }
+
     return response.data;
   },
 
   register: async (userData) => {
+    // Himoya: barcha maydonlarni tekshirish
+    if (!userData?.email || !userData?.password || !userData?.fullName) {
+      throw new Error("Barcha maydonlar to'ldirilishi shart");
+    }
+
     const response = await api.post('/api/auth/register', {
-      username: userData.email.trim().split('@')[0], // Agar registerga username majburiy bo'lsa
+      username: userData.email.trim().split('@')[0],
       email: userData.email.trim(),
       password: userData.password,
       fullName: userData.fullName.trim()
-    }, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
     });
+
+    if (!response?.data) {
+      throw new Error('Serverdan javob kelmadi');
+    }
+
     return response.data;
   },
 
